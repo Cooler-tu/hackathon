@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# ==============================
+# Hackathon Bot Setup Script
+# ==============================
+
+echo "🚀 开始设置交易机器人环境..."
+
+# Step 1: 更新系统
+echo "📦 正在更新系统包..."
+sudo dnf update -y
+
+# Step 2: 安装必要组件
+echo "🔧 安装 Git、Python3、pip、tmux..."
+sudo dnf install -y git python3-pip tmux
+
+# Step 3: 克隆代码仓库
+echo "📂 克隆机器人代码仓库..."
+cd ~
+if [ -d "bot-repo" ]; then
+  echo "⚠️ 检测到已存在的 bot-repo 目录，将跳过克隆。"
+else
+  git clone https://github.com/Kevin-freshman/hackathon.git hackathon.git
+fi
+
+# Step 4: 进入项目目录
+cd hackathon.git
+
+# Step 5: 安装 Python 依赖
+echo "📦 安装依赖中..."
+if [ -f "requirements.txt" ]; then
+  pip install -r requirements.txt
+else
+  echo "⚠️ 未检测到 requirements.txt 文件，跳过依赖安装。"
+fi
+
+# Step 6: 启动 tmux 并运行机器人
+echo "🧠 启动 tmux 并运行机器人..."
+
+# 检查是否已有 tmux 会话
+tmux has-session -t bot-session 2>/dev/null
+
+if [ $? != 0 ]; then
+  tmux new-session -d -s bot-session "python3 kz_bot.py"
+  echo "✅ 机器人已在后台运行！（会话名：bot-session）"
+else
+  echo "⚠️ 检测到已有 tmux 会话，机器人可能已在运行。"
+fi
+
+# Step 7: 提示用户如何查看机器人状态
+echo ""
+echo "🎯 操作完成！使用以下命令查看或管理机器人："
+echo "   tmux attach -t bot-session   # 重新连接会话"
+echo "   tmux detach                  # 分离会话（保持后台运行）"
+echo "   tmux ls                      # 查看所有会话"
+echo ""
+echo "🌟 祝你在黑客松比赛中取得好成绩！"
