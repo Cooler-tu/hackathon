@@ -50,12 +50,13 @@ class ExchangeClient:
         # 生成模拟 K 线（先跌后涨，易触发金叉/死叉）
         logger.info("生成模拟 K 线数据（Mock API 无 OHLCV 接口，带趋势测试）")
         np.random.seed(42)  # 固定种子 → 每次相同，便于演示
-        dates = pd.date_range(end=datetime.utcnow(), periods=limit, freq='5T')  # 15min K线，更敏感
+        dates = pd.date_range(end=datetime.utcnow(), periods=limit, freq='5min')  # 15min K线，更敏感
 
         # 价格曲线：前40根下跌，后60根上涨 → 必有交叉
+        half = limit//2
         trend = np.concatenate([
-            np.linspace(0, -3000, 50),  # 下跌 1500 点
-            np.linspace(-3000, 5000, 150)  # 反弹 3500 点
+            np.linspace(0, -3000, half),  # 下跌 1500 点
+            np.linspace(-3000, 5000, limit-half)  # 反弹 3500 点
         ])
         noise = np.random.randn(limit) * 200  # 适中波动
         close = 30000 + trend + noise
@@ -198,7 +199,9 @@ class TradingBot:
                 self.step()
                 time.sleep(interval_seconds)
                 for handler in logger._core.handlers.values():
-                    handler.flush()
+                    if hasattr(handler, "flush"):
+                        handler.flush()
+
         except KeyboardInterrupt:
             logger.info("停止")
 
