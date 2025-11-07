@@ -210,8 +210,12 @@ class TradingBot:
                 order = self.client.create_order(self.symbol, 'buy', amount, price)
                 self.entry_price = price
                 if order and order.get("status") == "filled":
+                    cost = amount * price
+                    if DRY_RUN:
+                        self.sim_usd -= cost
+                        self.sim_btc += amount
                     self.entry_price = price
-                    logger.info(f"买入成功 | 价格: {price:.2f} | 数量: {amount:.6f} BTC")
+                    logger.info(f"买入成功 | 数量: {amount:.6f} BTC | 成本: ${cost:.2f}")
                 else:
                     logger.warning(f"买入失败: {order}")
             elif signal == -1 and btc_balance > 0:
