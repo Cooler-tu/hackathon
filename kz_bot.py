@@ -207,12 +207,12 @@ class TradingBot:
             if signal == 1 and usd_balance > 10:
                 # 买入信号
                 amount = usd_balance / price
-                self.client.place_order(self.symbol, 'buy', price, amount)
+                self.client.place_order(self.symbol, 'buy', amount, price)
                 self.entry_price = price
                 logger.info(f"💹 触发【买入】信号 → 价格: {price:.2f} USD | 数量: {amount:.4f} BTC")
             elif signal == -1 and btc_balance > 0:
                 # 卖出信号
-                self.client.place_order(self.symbol, 'sell', price, btc_balance)
+                self.client.place_order(self.symbol, 'sell', btc_balance, price)
                 logger.info(f"💰 触发【卖出】信号 → 价格: {price:.2f} USD | 平仓收益: {pnl:.2f}%")
                 self.entry_price = 0.0
             else:
