@@ -166,34 +166,69 @@ class TradingBot:
 
     def step(self):
         try:
-            df = self.client.fetch_ohlcv(self.symbol, DEFAULT_TIMEFRAME, limit=100)
-            signals = self.strategy.generate_signals(df)
-            signal = int(signals.iloc[-1]) if not signals.empty else 0
-            balance = self.client.get_balance()
-            coin_name = self.symbol.split("/")[0]  # BTC
-            usd = float(balance.get("USD", 0))
-            coin = float(balance.get(coin_name, 0))
-            logger.info(f"[{now_ts()}] 价格: {df['close'].iloc[-1]:.2f} | 信号: {signal} | 持仓: {coin} {self.symbol.split('/')[0]} | 现金: {usd} USD")
+            df = self.client.fetch_ohlcv(self.symbol, DEFAULT_TIMEFRAME, limit=200)
+            close = df['close']
 
-            amount = int(TRADE_AMOUNT)
-            if signal == 1 and usd > amount:
-                order = self.client.create_order(self.symbol, "buy", amount)
-                if order:
-                    self.position += amount
-                    logger.info("买入成功")
-            elif signal == -1 and coin > 0.001:
-                sell_amount = int(coin) if coin >= 1 else coin
-                order = self.client.create_order(self.symbol, "sell", coin)
-                if order:
-                    self.position = 0
-                    logger.info("卖出成功")
+            # 计算短期、长期均线
+            short_window = 20
+            long_window = 50
+            short_ma = close.rolling(window=short_window).mean()
+            long_ma = close.rolling(window=long_window).mean()
+
+            # 计算信号（均线交叉）
+            signal = 0
+            if short_ma.iloc[-2] < long_ma.iloc[-2] and short_ma.iloc[-1] > long_ma.iloc[-1]:
+                signal = 1  # 金叉 → 买入
+            elif short_ma.iloc[-2] > long_ma.iloc[-2] and short_ma.iloc[-1] < long_ma.iloc[-1]:
+                signal = -1  # 死叉 → 卖出
+
+            price = float(close.iloc[-1])
+            balance = self.client.get_balance()
+            usd_balance = balance.get("USD", 0)
+            btc_balance = balance.get("BTC", 0)
+
+            # 初始化仓位追踪
+            if not hasattr(self, 'entry_price'):
+                self.entry_price = 0.0
+
+            # 实时盈亏计算
+            pnl = 0.0
+            if btc_balance > 0:
+                pnl = (price - self.entry_price) / self.entry_price * 100
+
+            # 输出详细调试信息
+            logger.debug(f"短均线={short_ma.iloc[-1]:.2f}, 长均线={long_ma.iloc[-1]:.2f}")
+            logger.info(
+                f"[{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}] "
+                f"价格: {price:.2f} | 信号: {signal} | 持仓: {btc_balance:.4f} BTC | 现金: {usd_balance:.2f} USD"
+            )
+
+            # 执行交易逻辑
+            if signal == 1 and usd_balance > 10:
+                # 买入信号
+                amount = usd_balance / price
+                self.client.place_order(self.symbol, 'buy', price, amount)
+                self.entry_price = price
+                logger.info(f"💹 触发【买入】信号 → 价格: {price:.2f} USD | 数量: {amount:.4f} BTC")
+            elif signal == -1 and btc_balance > 0:
+                # 卖出信号
+                self.client.place_order(self.symbol, 'sell', price, btc_balance)
+                logger.info(f"💰 触发【卖出】信号 → 价格: {price:.2f} USD | 平仓收益: {pnl:.2f}%")
+                self.entry_price = 0.0
             else:
                 logger.info("无信号")
-            logger.info(f"最近60个信号: {signals.tail(60).tolist()}")
-            
-            
-        except Exception:
-            logger.exception("step 出错")
+
+            # 保存信号历史（用于分析）
+            if not hasattr(self, 'signals'):
+                self.signals = []
+            self.signals.append(signal)
+            if len(self.signals) > 60:
+                self.signals.pop(0)
+            logger.info(f"最近60个信号: {self.signals}")
+
+        except Exception as e:
+            logger.error("step 出错", exc_info=True)
+
 
     def run_loop(self, interval_seconds=60):
         logger.info(f"[{now_ts()}] 启动循环，每 {interval_seconds}s 执行一次")
