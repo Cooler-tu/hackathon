@@ -49,30 +49,30 @@ class ExchangeClient:
     def fetch_ohlcv(self, symbol, timeframe, since=None, limit=200):
         # 生成模拟 K 线（先跌后涨，易触发金叉/死叉）
         logger.info("生成模拟 K 线数据（Mock API 无 OHLCV 接口，带趋势测试）")
-        np.random.seed(42)  # 固定种子 → 每次相同，便于演示
+        np.random.seed(int(datetime.utcnow().timestamp()) % 10000)  # 固定种子 → 每次相同，便于演示
         dates = pd.date_range(end=datetime.utcnow(), periods=limit, freq='5min')  # 15min K线，更敏感
 
         # 价格曲线：前40根下跌，后60根上涨 → 必有交叉
-        half = 60
+        half = limit // 2
         trend = np.concatenate([
-            np.linspace(0, -5000, limit-half),  # 下跌 1500 点
-            np.linspace(-5000, 8000, half)
+            np.linspace(0, -2000, limit-half),  # 下跌 1500 点
+            np.linspace(-2000, 3000, half)
         ])
-        noise = np.random.randn(limit) * 400  # 适中波动
+        noise = np.random.randn(limit) * 100  # 适中波动
         close = 30000 + trend + noise
         close = np.maximum(close, 20000)  # 防负数
 
         open_ = np.roll(close, 1)
         open_[0] = close[0]
-        high = np.maximum(open_, close) + abs(np.random.randn(limit) * 100)
-        low = np.minimum(open_, close) - abs(np.random.randn(limit) * 100)
+        high = np.maximum(open_, close) + abs(np.random.randn(limit) * 80)
+        low = np.minimum(open_, close) - abs(np.random.randn(limit) * 80)
 
         df = pd.DataFrame({
             'open': open_,
             'high': high,
             'low': low,
             'close': close,
-            'volume': np.random.randint(500, 5000, limit)
+            'volume': np.random.randint(1000, 3000, limit)
         }, index=dates)
         df.iloc[0, 0] = df.iloc[0]['close']
         return df.tail(limit)
