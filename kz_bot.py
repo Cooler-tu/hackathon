@@ -238,7 +238,7 @@ class TradingBot:
             if not hasattr(self, 'signals'):
                 self.signals = []
             self.signals.append(signal)
-            logger.info(f"最近60个信号: {self.signals.tail(60)}")
+            logger.info(f"最近60个信号: {self.signals}")
 
         except Exception as e:
             logger.error("step 出错", exc_info=True)
