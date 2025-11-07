@@ -208,7 +208,6 @@ class TradingBot:
                 # 买入信号
                 amount = usd_balance / price
                 order = self.client.create_order(self.symbol, 'buy', amount, price)
-                self.entry_price = price
                 if order and order.get("status") == "filled":
                     cost = amount * price
                     if DRY_RUN:
