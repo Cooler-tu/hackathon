@@ -162,6 +162,10 @@ class TradingBot:
         self.symbol = symbol
         self.strategy = strategy or SmaCross()
         self.position = 0.0
+
+        self.sim_usd = 50000.0
+        self.sim_btc = 0.0
+
         logger.info(f"[{now_ts()}] Bot 初始化: {symbol}")
 
     def step(self):
@@ -183,9 +187,14 @@ class TradingBot:
                 signal = -1  # 死叉 → 卖出
 
             price = float(close.iloc[-1])
-            balance = self.client.get_balance()
-            usd_balance = balance.get("USD", 0)
-            btc_balance = balance.get("BTC", 0)
+            # 获取余额
+            if DRY_RUN:
+                usd_balance = self.sim_usd
+                btc_balance = self.sim_btc
+            else:
+                balance = self.client.get_balance()
+                usd_balance = balance.get("USD", 0)
+                btc_balance = balance.get("BTC", 0)
 
             # 初始化仓位追踪
             if not hasattr(self, 'entry_price'):
