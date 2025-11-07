@@ -54,10 +54,10 @@ class ExchangeClient:
 
         # 价格曲线：前40根下跌，后60根上涨 → 必有交叉
         trend = np.concatenate([
-            np.linspace(0, -3000, 40),  # 下跌 1500 点
-            np.linspace(-3000, 5000, 120)  # 反弹 3500 点
+            np.linspace(0, -3000, 50),  # 下跌 1500 点
+            np.linspace(-3000, 5000, 150)  # 反弹 3500 点
         ])
-        noise = np.random.randn(limit) * 150  # 适中波动
+        noise = np.random.randn(limit) * 200  # 适中波动
         close = 30000 + trend + noise
         close = np.maximum(close, 20000)  # 防负数
 
