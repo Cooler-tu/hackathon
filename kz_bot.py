@@ -190,7 +190,6 @@ class TradingBot:
             else:
                 logger.info("无信号")
             logger.info(f"最近60个信号: {signals.tail(60).tolist()}")
-            logger.debug(f"短均线={short_ma[-1]:.2f}, 长均线={long_ma[-1]:.2f}")
             
             
         except Exception:
