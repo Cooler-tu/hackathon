@@ -16,7 +16,6 @@ from loguru import logger
 from dotenv import load_dotenv
 import schedule
 import backtrader as bt
-import json
 
 from roostoo_client import RoostooClient
 
@@ -78,7 +77,6 @@ class ExchangeClient:
             'close': close,
             'volume': volume
         }, index=dates)
-        s
     
         return df.tail(limit)
 
