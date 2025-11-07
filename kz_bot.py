@@ -34,7 +34,7 @@ DEFAULT_SINCE_DAYS = int(os.getenv("DEFAULT_SINCE_DAYS", "90"))
 INITIAL_CASH = float(os.getenv("INITIAL_CASH", "1000000.0"))
 TRADE_AMOUNT = int(float(os.getenv("TRADE_AMOUNT", "10000")))
 
-logger.add("bot.log", rotation="10 MB", retention="7 days", level="INFO")
+logger.add("bot.log", rotation="10 MB", retention="7 days", level="INFO", enqueue=True, backtrace=True)
 
 # ========== 工具函数 ==========
 def now_ts() -> str:
@@ -46,34 +46,35 @@ class ExchangeClient:
         self.client = RoostooClient()
         logger.info(f"[{now_ts()}] 初始化 Roostoo Mock 客户端, DRY_RUN={DRY_RUN}")
 
-    def fetch_ohlcv(self, symbol, timeframe, since=None, limit=100):
+    def fetch_ohlcv(self, symbol, timeframe, since=None, limit=200):
         # 生成模拟 K 线（先跌后涨，易触发金叉/死叉）
         logger.info("生成模拟 K 线数据（Mock API 无 OHLCV 接口，带趋势测试）")
         np.random.seed(42)  # 固定种子 → 每次相同，便于演示
-        dates = pd.date_range(end=datetime.utcnow(), periods=limit, freq='15T')  # 15min K线，更敏感
+        dates = pd.date_range(end=datetime.utcnow(), periods=limit, freq='5T')  # 15min K线，更敏感
 
         # 价格曲线：前40根下跌，后60根上涨 → 必有交叉
         trend = np.concatenate([
-            np.linspace(0, -1500, 40),  # 下跌 1500 点
-            np.linspace(-1500, 2000, 60)  # 反弹 3500 点
+            np.linspace(0, -3000, 40),  # 下跌 1500 点
+            np.linspace(-3000, 5000, 120)  # 反弹 3500 点
         ])
-        noise = np.random.randn(limit) * 80  # 适中波动
+        noise = np.random.randn(limit) * 150  # 适中波动
         close = 30000 + trend + noise
         close = np.maximum(close, 20000)  # 防负数
 
         open_ = np.roll(close, 1)
         open_[0] = close[0]
-        high = np.maximum(open_, close) + abs(np.random.randn(limit) * 50)
-        low = np.minimum(open_, close) - abs(np.random.randn(limit) * 50)
+        high = np.maximum(open_, close) + abs(np.random.randn(limit) * 100)
+        low = np.minimum(open_, close) - abs(np.random.randn(limit) * 100)
 
         df = pd.DataFrame({
             'open': open_,
             'high': high,
             'low': low,
             'close': close,
-            'volume': np.random.randint(200, 2000, limit)
+            'volume': np.random.randint(500, 5000, limit)
         }, index=dates)
-        return df
+        df.iloc[0, 0] = df.iloc[0]['close']
+        return df.tail(limit)
 
     def create_order(self, symbol, side, amount, price=None, order_type="market"):
         logger.info(f"[{now_ts()}] 下单请求: {side} {amount} {symbol} @ {order_type}")
@@ -183,6 +184,10 @@ class TradingBot:
                     logger.info("卖出成功")
             else:
                 logger.info("无信号")
+            
+            # 强制刷新日志
+            logger.handlers[0].flush() if logger.handlers else None
+
         except Exception:
             logger.exception("step 出错")
 
@@ -192,6 +197,8 @@ class TradingBot:
             while True:
                 self.step()
                 time.sleep(interval_seconds)
+                for handler in logger._core.handlers.values():
+                    handler.flush()
         except KeyboardInterrupt:
             logger.info("停止")
 
