@@ -46,25 +46,34 @@ class ExchangeClient:
         self.client = RoostooClient()
         logger.info(f"[{now_ts()}] 初始化 Roostoo Mock 客户端, DRY_RUN={DRY_RUN}")
 
-    def fetch_ohlcv(self, symbol, timeframe, since=None, limit=500):
-        # Mock API 无 K 线 → 生成模拟数据
-        logger.info("生成模拟 K 线数据（Mock API 无 OHLCV 接口）")
-        end = datetime.utcnow()
-        start = end - timedelta(days=DEFAULT_SINCE_DAYS)
-        dates = pd.date_range(start, end, periods=limit)
-        np.random.seed(42)
-        close = 30000 + np.cumsum(np.random.randn(limit) * 50)
+    def fetch_ohlcv(self, symbol, timeframe, since=None, limit=100):
+        # 生成模拟 K 线（先跌后涨，易触发金叉/死叉）
+        logger.info("生成模拟 K 线数据（Mock API 无 OHLCV 接口，带趋势测试）")
+        np.random.seed(42)  # 固定种子 → 每次相同，便于演示
+        dates = pd.date_range(end=datetime.utcnow(), periods=limit, freq='15T')  # 15min K线，更敏感
+
+        # 价格曲线：前40根下跌，后60根上涨 → 必有交叉
+        trend = np.concatenate([
+            np.linspace(0, -1500, 40),  # 下跌 1500 点
+            np.linspace(-1500, 2000, 60)  # 反弹 3500 点
+        ])
+        noise = np.random.randn(limit) * 80  # 适中波动
+        close = 30000 + trend + noise
+        close = np.maximum(close, 20000)  # 防负数
+
+        open_ = np.roll(close, 1)
+        open_[0] = close[0]
+        high = np.maximum(open_, close) + abs(np.random.randn(limit) * 50)
+        low = np.minimum(open_, close) - abs(np.random.randn(limit) * 50)
+
         df = pd.DataFrame({
-            'timestamp': [int(t.timestamp() * 1000) for t in dates],
-            'open': close * (1 + np.random.randn(limit) * 0.001),
-            'high': close * (1 + abs(np.random.randn(limit)) * 0.002),
-            'low': close * (1 - abs(np.random.randn(limit)) * 0.002),
+            'open': open_,
+            'high': high,
+            'low': low,
             'close': close,
-            'volume': np.random.randint(100, 1000, limit)
-        })
-        df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
-        df.set_index("datetime", inplace=True)
-        return df[["open", "high", "low", "close", "volume"]]
+            'volume': np.random.randint(200, 2000, limit)
+        }, index=dates)
+        return df
 
     def create_order(self, symbol, side, amount, price=None, order_type="market"):
         logger.info(f"[{now_ts()}] 下单请求: {side} {amount} {symbol} @ {order_type}")
