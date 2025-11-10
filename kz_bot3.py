@@ -169,15 +169,33 @@ class DynamicMomentumBot:
 
             # 4. 计算动量得分（过去15分钟涨幅）
             momentum_targets = {}  # {sym: target_usd}
+            # 在动量计算部分修改为：
             for sym in SYMBOLS:
                 try:
+                    asset = sym.split("/")[0]
+                    # 使用正确的方法和参数
                     data = self.client.horus.get_market_price(
-                        pair=sym.replace("/", ""), limit=2
+                        asset=asset, 
+                        interval="15m",  # 使用15分钟间隔
+                        # 计算合适的时间范围来获取最近2个数据点
+                        start=int(time.time()) - (30 * 60)  # 最近30分钟
                     )
-                    ret = (data[0]["close"] / data[1]["close"]) - 1
-                    target_usd = ret * BASE_PER_PERCENT * 100  # 百分比 → 美元
-                    momentum_targets[sym] = max(target_usd, -usd * 0.5)  # 防卖空
-                except:
+                    
+                    logger.info(f"{asset} 获取到 {len(data)} 条数据")
+                    
+                    if len(data) >= 2:
+                        # 取最后两条数据
+                        recent_data = data[-2:]
+                        ret = (recent_data[1]["price"] / recent_data[0]["price"]) - 1
+                        target_usd = ret * BASE_PER_PERCENT * 100
+                        momentum_targets[sym] = max(target_usd, -usd * 0.5)
+                        logger.info(f"{asset} 收益率: {ret:.4%}, 目标仓位: ${target_usd:,.0f}")
+                    else:
+                        logger.warning(f"{asset} 数据不足，只有 {len(data)} 条")
+                        momentum_targets[sym] = 0
+                        
+                except Exception as e:
+                    logger.error(f"{sym} 动量计算错误: {e}")
                     momentum_targets[sym] = 0
 
             logger.info(f"动量目标: { {s: f'${v:,.0f}' for s,v in momentum_targets.items() } }")
