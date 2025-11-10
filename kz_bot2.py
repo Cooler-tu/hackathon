@@ -88,7 +88,7 @@ class ExchangeClient:
             return self.horus._mock_price(symbol.split("/")[0])
 
     def get_balance(self):
-        res = self._sign_and_request("GET", "/v3/balance")
+        res = self.roostoo._sign_and_request("GET", "/v3/balance")
         logger.info(f"[Roostoo] get_balance raw response: {res}")
         if not res.get("Success"):
             logger.warning(f"Roostoo get_balance failed: {res.get('ErrMsg')}")
