@@ -94,11 +94,7 @@ class ExchangeClient:
             DRY_RUN = True
 
         # 使用正式 API URL
-        self.roostoo = RoostooClient(
-            api_key=self.api_key,
-            secret_key=self.secret_key,
-            base_url="https://api.roostoo.com"  # ✅ 正式接口
-        )
+        self.roostoo = RoostooClient()
         self.horus = HorusClient()
         logger.info(f"[{self.ts()}] 客户端就绪 | DRY_RUN={DRY_RUN}")
 
