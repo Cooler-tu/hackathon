@@ -14,7 +14,7 @@ from typing import Dict, List
 import pandas as pd
 import numpy as np
 from loguru import logger
-from roostoo_client import RoostooClient
+from roostoo_ient import RoostooClient
 from horus_client import HorusClient
 
 # ==================== 配置 ====================
@@ -47,6 +47,14 @@ class RiskManager:
         self.today_pnl = 0.0
 
     def check(self, total_value: float, positions: Dict) -> bool:
+
+
+        if total_value <= 0 or self.peak <= 0:
+            logger.warning("资产或峰值为 0，跳过风控计算")
+            return False
+
+
+
         # 1. 最大回撤
         self.peak = max(self.peak, total_value)
         if (self.peak - total_value) / self.peak > self.max_drawdown:
@@ -164,6 +172,7 @@ class DynamicMomentumBot:
                     side = "buy" if amount > 0 else "sell"
                     self.client.place_order(sym, side, amount)
                     logger.info(f"→ {side.upper()} {abs(amount):.6f} {sym} (${abs(diff_usd):,.0f})")
+                 
 
         except Exception as e:
             logger.error(f"step 错误: {e}", exc_info=True)
