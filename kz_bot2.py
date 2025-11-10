@@ -149,6 +149,7 @@ class DynamicMomentumBot:
                     data = self.client.horus.get_market_price(
                         pair=sym.replace("/", ""), limit=2
                     )
+                    logger.info(f"data数据为{data}")
                     ret = (data[0]["close"] / data[1]["close"]) - 1
                     target_usd = ret * BASE_PER_PERCENT * 100  # 百分比 → 美元
                     momentum_targets[sym] = max(target_usd, -usd * 0.5)  # 防卖空
