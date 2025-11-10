@@ -20,7 +20,7 @@ from horus_client import HorusClient
 # ==================== 配置 ====================
 INITIAL_CASH = 1_000_000
 DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"
-SYMBOLS = ["BTC/USD", "ETH/USD", "SOL/USD"]  # 可扩展
+SYMBOLS = ["BTC/USD", "ETH/USD", "SOL/USD"]
 BASE_PER_PERCENT = 10_000  # 每涨 1% 分配 $10,000
 INTERVAL = 900  # 15 分钟调仓一次
 
@@ -65,13 +65,16 @@ class ExchangeClient:
     def ts(self): return datetime.utcnow().strftime("%m-%d %H:%M:%S")
 
     def fetch_price(self, symbol: str) -> float:
-        """用 Horus 获取最新价格"""
+        """获取最新价格（优先 Horus，其次模拟价）"""
         try:
-            data = self.horus.get_market_price(pair=symbol, limit=2)
-            return float(data[0]["close"])
-        except:
-            logger.warning(f"{symbol} Horus 失败，用模拟价")
-            return 69000 if "BTC" in symbol else 2800 if "ETH" in symbol else 180
+            # ✅ symbol 如 "BTC/USD"，提取 "BTC"
+            asset = symbol.split("/")[0]
+            price = self.horus.get_latest_price(asset)
+            logger.info(f"{asset}/USD 最新价: {price}")
+            return price
+        except Exception as e:
+            logger.warning(f"{symbol} Horus 获取失败: {e}，使用模拟价")
+            return self.horus._mock_price(symbol.split("/")[0])
 
     def get_balance(self) -> Dict[str, float]:
         if DRY_RUN:
