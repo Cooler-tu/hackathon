@@ -8,7 +8,7 @@ import os
 
 load_dotenv()
 
-BASE_URL = "https://api.roostoo.com"
+BASE_URL = "https://mock-api.roostoo.com"
 
 API_KEY = os.getenv("ROOSTOO_API_KEY")
 API_SECRET = os.getenv("ROOSTOO_API_SECRET")
