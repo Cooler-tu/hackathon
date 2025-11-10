@@ -134,7 +134,7 @@ class ExchangeClient:
         return self._sign_and_request("POST", "/v3/faucet")
 
     def ts(self): return datetime.utcnow().strftime("%m-%d %H:%M:%S")
-'''
+
     def fetch_price(self, symbol: str) -> float:
         """获取最新价格（优先 Horus，其次模拟价）"""
         try:
@@ -146,7 +146,7 @@ class ExchangeClient:
         except Exception as e:
             logger.warning(f"{symbol} Horus 获取失败: {e}，使用模拟价")
             return self.horus._mock_price(symbol.split("/")[0])
-
+'''
     def get_balance(self):
         res = self._sign_and_request("GET", "/v3/balance")
         logger.info(f"[Roostoo] get_balance raw response: {res}")
