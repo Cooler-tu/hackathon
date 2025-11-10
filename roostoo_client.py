@@ -26,6 +26,7 @@ class RoostooClient:
         self.api_secret = API_SECRET
         self.session = requests.Session()
         self.session.headers.update({"RST-API-KEY": self.api_key})
+        
 
     # ✅ 正确签名函数
     def sign(self, params: dict = None):
@@ -57,6 +58,9 @@ class RoostooClient:
         except Exception as e:
             logger.error(f"API 请求失败: {endpoint} | {response.text if 'response' in locals() else str(e)}")
             raise
+
+    def faucet(self):
+        return self._sign_and_request("POST", "/v3/faucet")
 
     # 🧩 各种接口封装
     def get_server_time(self):

@@ -177,4 +177,10 @@ class DynamicMomentumBot:
 if __name__ == "__main__":
     client = ExchangeClient()
     bot = DynamicMomentumBot(client)
+
+    try:
+        bot.client.faucet()
+        logger.info("✅ 已领取测试资金")
+    except Exception as e:
+        logger.warning(f"❌ 领取资金失败: {e}")
     bot.run()
