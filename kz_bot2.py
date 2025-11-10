@@ -14,7 +14,7 @@ from typing import Dict, List
 import pandas as pd
 import numpy as np
 from loguru import logger
-from roostoo_ient import RoostooClient
+from roostoo_client import RoostooClient
 from horus_client import HorusClient
 
 # ==================== 配置 ====================
