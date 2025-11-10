@@ -4,6 +4,8 @@ import hashlib
 import hmac
 import time
 from loguru import logger
+from dotenv import load_dotenv
+import os
 
 BASE_URL = "https://mock-api.roostoo.com"
 
@@ -13,9 +15,9 @@ API_SECRET = os.getenv("ROOSTOO_API_SECRET")
 def now_ts():
     return int(time.time() * 1000)
 
-def generate_signature(params):
-    query_string = '&'.join([f"{k}={v}" for k, v in sorted(params.items()) if v is not None])
-    return hmac.new(SECRET.encode(), query_string.encode(), hashlib.sha256).hexdigest()
+def sign(self, params: dict):
+        query = "&".join(f"{k}={v}" for k, v in sorted(params.items()))
+        return hmac.new(self.api_secret.encode(), query.encode(), hashlib.sha256).hexdigest()
 
 class RoostooClient:
     def __init__(self):
