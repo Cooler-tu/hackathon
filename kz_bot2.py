@@ -19,7 +19,7 @@ from horus_client import HorusClient
 
 # ==================== 配置 ====================
 INITIAL_CASH = 1_000_000
-DRY_RUN = os.getenv("DRY_RUN", "false").lower() == "true"
+DRY_RUN = False
 SYMBOLS = [
     "BTC/USD", "ETH/USD", "XRP/USD", "BNB/USD", "SOL/USD", "DOGE/USD",
     "TRX/USD", "ADA/USD", "XLM/USD", "WBTC/USD", "SUI/USD", "HBAR/USD",
@@ -33,7 +33,7 @@ SYMBOLS = [
     "STX/USD"
 ]
 BASE_PER_PERCENT = 10_000  # 每涨 1% 分配 $10,000
-INTERVAL = 10  # 15 分钟调仓一次
+INTERVAL = 900  # 15 分钟调仓一次
 
 logger.add("champion_bot.log", rotation="10 MB", level="INFO", enqueue=True)
 
