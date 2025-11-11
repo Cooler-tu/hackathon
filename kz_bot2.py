@@ -33,7 +33,7 @@ SYMBOLS = [
     "STX/USD"
 ]
 BASE_PER_PERCENT = 10_000  # 每涨 1% 分配 $10,000
-INTERVAL = 10  # 15 分钟调仓一次
+INTERVAL = 900  # 15 分钟调仓一次
 
 logger.add("champion_bot.log", rotation="10 MB", level="INFO", enqueue=True)
 
@@ -189,6 +189,8 @@ class DynamicMomentumBot:
                 except Exception as e:
                     logger.error(f"{sym} 动量计算错误: {e}")
                     momentum_targets[sym] = 0
+            
+            logger.info(f"动量目标: { {s: f'${v:,.0f}' for s,v in momentum_targets.items() } }")
 
             # 5. 再平衡：卖弱买强
             for sym, target_usd in momentum_targets.items():
