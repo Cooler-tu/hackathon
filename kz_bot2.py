@@ -178,7 +178,7 @@ class DynamicMomentumBot:
                         # 取最后两条数据
                         recent_data = data[-2:]
                         ret = (recent_data[1]["price"] / recent_data[0]["price"]) - 1
-                        target_usd = ret * BASE_PER_PERCENT
+                        target_usd = ret * BASE_PER_PERCENT * 1.
                         momentum_targets[sym] = max(target_usd, -usd * 0.5)
                         logger.info(f"{asset} 收益率: {ret:.4%}, 目标仓位: ${target_usd:,.0f}")
                     else:
