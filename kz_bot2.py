@@ -181,7 +181,7 @@ class DynamicMomentumBot:
                         target_usd: float = ret * BASE_PER_PERCENT
                         momentum_targets[sym] = max(target_usd, -usd * 0.5)
                         logger.info(f"{asset} 收益率: {ret:.4%}, 目标仓位: ${target_usd:,.0f}")
-                        logger.info(f"0的时间戳为{recent_data[0]["timestamp"]}, 1的时间戳为{recent_data[1]["timestamp"]}")
+                        logger.info(f"0的时间戳为{recent_data[0]["end"]}, 1的时间戳为{recent_data[1]["end"]}")
                     else:
                         logger.warning(f"{asset} 数据不足，只有 {len(data)} 条")
                         momentum_targets[sym] = 0
