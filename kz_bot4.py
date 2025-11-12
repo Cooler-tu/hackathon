@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 from loguru import logger
 from roostoo_client import RoostooClient
-from horus_client2 import HorusClient
+from horus_client3 import HorusClient
 
 # ==================== 配置 ====================
 INITIAL_CASH = 1_000_000
