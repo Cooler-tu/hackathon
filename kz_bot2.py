@@ -167,7 +167,6 @@ class DynamicMomentumBot:
                     # 使用正确的方法和参数
                     data = self.client.horus.get_market_price(
                         asset=asset, 
-                        interval="15m",  # 使用15分钟间隔
                         # 计算合适的时间范围来获取最近2个数据点
                         interval="15m",
                         limit = 2
