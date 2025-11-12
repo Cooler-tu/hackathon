@@ -18,7 +18,7 @@ import schedule
 import backtrader as bt
 
 
-from horus_client import HorusClient
+from horus_client2 import HorusClient
 from roostoo_client import RoostooClient
 
 # ========== 配置 ==========
@@ -118,7 +118,7 @@ class ExchangeClient:
 '''
 
 # kz_bot.py (关键修改)
-from horus_client import HorusClient  # 新增导入
+from horus_client2 import HorusClient  # 新增导入
 
 class ExchangeClient:
     def __init__(self):
