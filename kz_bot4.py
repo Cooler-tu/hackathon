@@ -213,7 +213,7 @@ class DynamicMomentumBot:
                     max_buyable = usd * 0.995  # 留 0.5% buffer 防止全部耗尽
                     if diff_usd > max_buyable:
                         diff_usd = max_buyable
-
+#ai
                 # 卖出保护：不卖超过当前持仓（避免造成负持仓）
                 if diff_usd < 0:
                     # positions[sym] = amount * price
