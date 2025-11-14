@@ -19,10 +19,11 @@ import pandas as pd
 import numpy as np
 from loguru import logger
 from roostoo_client import RoostooClient
-from horus_client2 import HorusClient
+from horus_client import HorusClient
 
 # ==================== 配置 ====================
-INITIAL_CASH = 50_000
+INITIAL_CASH = 1_000_000
+
 DRY_RUN = False
 SYMBOLS = [
     "BTC/USD", "ETH/USD", "XRP/USD", "BNB/USD", "SOL/USD", "DOGE/USD",
@@ -36,7 +37,7 @@ SYMBOLS = [
     "TIA/USD", "JTO/USD", "JUP/USD", "QNT/USD", "FORM/USD", "INJ/USD",
     "STX/USD"
 ]
-BASE_PER_PERCENT = 1000  # 每涨 1% 分配 $10,000
+BASE_PER_PERCENT = 10_000  # 每涨 1% 分配 $10,000
 INTERVAL = 900  # 15 分钟调仓一次
 
 logger.add("champion_bot.log", rotation="10 MB", level="INFO", enqueue=True)
@@ -79,25 +80,37 @@ class RiskManager:
         return True
 
 # ==================== 客户端 ====================
+# ==================== 客户端 ====================
 class ExchangeClient:
     def __init__(self):
+        # 检查环境变量
+        self.api_key = os.getenv("ROOSTOO_API_KEY")
+        self.secret_key = os.getenv("ROOSTOO_API_SECRET")
+        global DRY_RUN
+        DRY_RUN = os.getenv("DRY_RUN", "false").lower() == "true"
+
+        if not self.api_key or not self.secret_key:
+            logger.warning("未读取到 Roostoo API Key 或 Secret，启用 DRY_RUN")
+            DRY_RUN = True
+
+        # 使用正式 API URL
         self.roostoo = RoostooClient()
         self.horus = HorusClient()
         logger.info(f"[{self.ts()}] 客户端就绪 | DRY_RUN={DRY_RUN}")
 
-    def ts(self): return datetime.utcnow().strftime("%m-%d %H:%M:%S")
+    def ts(self):
+        return datetime.utcnow().strftime("%m-%d %H:%M:%S")
 
     def fetch_price(self, symbol: str) -> float:
         """获取最新价格（优先 Horus，其次模拟价）"""
         try:
-            # ✅ symbol 如 "BTC/USD"，提取 "BTC"
             asset = symbol.split("/")[0]
             price = self.horus.get_latest_price(asset)
             logger.info(f"{asset}/USD 最新价: {price}")
             return price
         except Exception as e:
             logger.warning(f"{symbol} Horus 获取失败: {e}，使用模拟价")
-            return self.horus._mock_price(symbol.split("/")[0])
+            return self.horus._mock_price(asset)
 
     def get_balance(self):
         res = self.roostoo._sign_and_request("GET", "/v3/balance")
@@ -110,9 +123,9 @@ class ExchangeClient:
         flat = {asset: info["Free"] for asset, info in wallet.items()}
         return flat
 
-
     def place_order(self, symbol: str, side: str, amount: float):
-        if amount == 0: return
+        if amount == 0:
+            return
         if DRY_RUN:
             logger.info(f"[DRY] 模拟 {side} {abs(amount):.6f} {symbol}")
             return {"status": "filled"}
@@ -153,24 +166,8 @@ class DynamicMomentumBot:
             if not self.risk.check(total_value, positions):
                 logger.info("风控暂停交易，观望中...")
                 return
-            '''
-            # 4. 计算动量得分（过去15分钟涨幅）
-            momentum_targets = {}  # {sym: target_usd}
-            for sym in SYMBOLS:
-                try:
-                    data = self.horus.get_market_price(
-                        pair=sym.replace("/", ""), limit=2
-                    )
-                    logger.info(f"data数据为{data}")
-                    ret = (data[0]["close"] / data[1]["close"]) - 1
-                    target_usd = ret * BASE_PER_PERCENT * 100  # 百分比 → 美元
-                    momentum_targets[sym] = max(target_usd, -usd * 0.5)  # 防卖空
-                except:
-                    momentum_targets[sym] = 0
 
-            logger.info(f"动量目标: { {s: f'${v:,.0f}' for s,v in momentum_targets.items() } }")
-            '''
-        #    4. 计算动量得分（过去15分钟涨幅）
+            # 4. 计算动量得分（过去15分钟涨幅）
             momentum_targets = {}  # {sym: target_usd}
             # 在动量计算部分修改为：
             for sym in SYMBOLS:
@@ -179,9 +176,9 @@ class DynamicMomentumBot:
                     # 使用正确的方法和参数
                     data = self.client.horus.get_market_price(
                         asset=asset, 
+                        interval="15m",  # 使用15分钟间隔
                         # 计算合适的时间范围来获取最近2个数据点
-                        interval="15m",
-                        limit = 2
+                        start=int(time.time()) - (30 * 60)  # 最近30分钟
                     )
                     
                     logger.info(f"{asset} 获取到 {len(data)} 条数据")
@@ -190,7 +187,7 @@ class DynamicMomentumBot:
                         # 取最后两条数据
                         recent_data = data[-2:]
                         ret = (recent_data[1]["price"] / recent_data[0]["price"]) - 1
-                        target_usd: float = ret * BASE_PER_PERCENT
+                        target_usd = ret * BASE_PER_PERCENT * 100
                         momentum_targets[sym] = max(target_usd, -usd * 0.5)
                         logger.info(f"{asset} 收益率: {ret:.4%}, 目标仓位: ${target_usd:,.0f}")
                     else:
@@ -200,7 +197,7 @@ class DynamicMomentumBot:
                 except Exception as e:
                     logger.error(f"{sym} 动量计算错误: {e}")
                     momentum_targets[sym] = 0
-            
+
             logger.info(f"动量目标: { {s: f'${v:,.0f}' for s,v in momentum_targets.items() } }")
 
             # 5. 再平衡：卖弱买强
@@ -212,29 +209,7 @@ class DynamicMomentumBot:
                 if current_usd + diff_usd > total_value * 0.35:
                     diff_usd = total_value * 0.35 - current_usd
 
-                # 现金保护：买入不超过可用现金（留一点缓冲，例如 0.5%）
-                if diff_usd > 0:
-                    max_buyable = usd * 0.995  # 留 0.5% buffer 防止全部耗尽
-                    if diff_usd > max_buyable:
-                        diff_usd = max_buyable
-
-                # 卖出保护：不卖超过当前持仓（避免造成负持仓）
-                if diff_usd < 0:
-                    # positions[sym] = amount * price
-                    current_amount = 0.0
-                    asset = sym.split("/")[0]
-                    # 从 balance 里取当前持仓数量（确保类型为 float）
-                    current_amount = float(balance.get(asset, 0) or 0)
-                    amount = diff_usd / prices[sym]
-                    # 如果要卖的数量绝对值超过手上持有数量，则限制为持仓
-                    if abs(amount) > current_amount:
-                        amount = -current_amount
-                else:
-                    amount = diff_usd / prices[sym]
-
-
-
-                if abs(diff_usd) > 100:  # 最小交易额
+                if abs(diff_usd) > 500:  # 最小交易额
                     amount = diff_usd / prices[sym]
                     side = "buy" if amount > 0 else "sell"
                     self.client.place_order(sym, side, amount)

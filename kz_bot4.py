@@ -7,10 +7,6 @@
 """
 
 import os
-from dotenv import load_dotenv
-
-load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
-
 import time
 import argparse
 from datetime import datetime
@@ -19,10 +15,10 @@ import pandas as pd
 import numpy as np
 from loguru import logger
 from roostoo_client import RoostooClient
-from horus_client2 import HorusClient
+from horus_client3 import HorusClient
 
 # ==================== 配置 ====================
-INITIAL_CASH = 50_000
+INITIAL_CASH = 500_000
 DRY_RUN = False
 SYMBOLS = [
     "BTC/USD", "ETH/USD", "XRP/USD", "BNB/USD", "SOL/USD", "DOGE/USD",
@@ -36,8 +32,8 @@ SYMBOLS = [
     "TIA/USD", "JTO/USD", "JUP/USD", "QNT/USD", "FORM/USD", "INJ/USD",
     "STX/USD"
 ]
-BASE_PER_PERCENT = 1000  # 每涨 1% 分配 $10,000
-INTERVAL = 900  # 15 分钟调仓一次
+BASE_PER_PERCENT = 2000  # 每涨 1% 分配 $2,000
+INTERVAL = 3600  # 60 分钟调仓一次
 
 logger.add("champion_bot.log", rotation="10 MB", level="INFO", enqueue=True)
 
@@ -51,14 +47,6 @@ class RiskManager:
         self.today_pnl = 0.0
 
     def check(self, total_value: float, positions: Dict) -> bool:
-
-
-        if total_value <= 0 or self.peak <= 0:
-            logger.warning("资产或峰值为 0，跳过风控计算")
-            return False
-
-
-
         # 1. 最大回撤
         self.peak = max(self.peak, total_value)
         if (self.peak - total_value) / self.peak > self.max_drawdown:
@@ -121,6 +109,21 @@ class ExchangeClient:
         except Exception as e:
             logger.error(f"下单失败 {symbol}: {e}")
 
+    def manual_buy_1usd_btc(self):
+        """手动买入价值1 USD的比特币"""
+        symbol = "BTC/USD"
+        usd_amount = 1.0
+        try:
+            price = self.fetch_price(symbol)
+            if price <= 0:
+                raise ValueError("无效的价格")
+            amount = usd_amount / price
+            logger.info(f"计算得到买入数量: {amount:.8f} BTC (价值约 ${usd_amount})")
+            self.place_order(symbol, "buy", amount)
+            logger.info(f"手动买入 {amount:.8f} BTC 完成")
+        except Exception as e:
+            logger.error(f"手动买入失败: {e}")
+
 # ==================== 核心策略 ====================
 class DynamicMomentumBot:
     def __init__(self, client):
@@ -179,6 +182,7 @@ class DynamicMomentumBot:
                     # 使用正确的方法和参数
                     data = self.client.horus.get_market_price(
                         asset=asset, 
+                        # interval="15m",  # 使用15分钟间隔
                         # 计算合适的时间范围来获取最近2个数据点
                         interval="15m",
                         limit = 2
@@ -190,7 +194,7 @@ class DynamicMomentumBot:
                         # 取最后两条数据
                         recent_data = data[-2:]
                         ret = (recent_data[1]["price"] / recent_data[0]["price"]) - 1
-                        target_usd: float = ret * BASE_PER_PERCENT
+                        target_usd = ret * BASE_PER_PERCENT
                         momentum_targets[sym] = max(target_usd, -usd * 0.5)
                         logger.info(f"{asset} 收益率: {ret:.4%}, 目标仓位: ${target_usd:,.0f}")
                     else:
@@ -211,13 +215,20 @@ class DynamicMomentumBot:
                 # 限制单资产暴露
                 if current_usd + diff_usd > total_value * 0.35:
                     diff_usd = total_value * 0.35 - current_usd
+                
+
+
+
+                max_allowed_for_asset = total_value * 0.35
+                if current_usd + diff_usd > max_allowed_for_asset:
+                    diff_usd = max_allowed_for_asset - current_usd
 
                 # 现金保护：买入不超过可用现金（留一点缓冲，例如 0.5%）
                 if diff_usd > 0:
                     max_buyable = usd * 0.995  # 留 0.5% buffer 防止全部耗尽
                     if diff_usd > max_buyable:
                         diff_usd = max_buyable
-
+#ai
                 # 卖出保护：不卖超过当前持仓（避免造成负持仓）
                 if diff_usd < 0:
                     # positions[sym] = amount * price
@@ -234,12 +245,12 @@ class DynamicMomentumBot:
 
 
 
-                if abs(diff_usd) > 100:  # 最小交易额
+
+                if abs(diff_usd) > 20:  # 最小交易额
                     amount = diff_usd / prices[sym]
                     side = "buy" if amount > 0 else "sell"
                     self.client.place_order(sym, side, amount)
                     logger.info(f"→ {side.upper()} {abs(amount):.6f} {sym} (${abs(diff_usd):,.0f})")
-                 
 
         except Exception as e:
             logger.error(f"step 错误: {e}", exc_info=True)
