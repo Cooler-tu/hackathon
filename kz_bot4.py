@@ -32,8 +32,8 @@ SYMBOLS = [
     "TIA/USD", "JTO/USD", "JUP/USD", "QNT/USD", "FORM/USD", "INJ/USD",
     "STX/USD"
 ]
-BASE_PER_PERCENT = 10_00  # 每涨 1% 分配 $10,000
-INTERVAL = 900  # 15 分钟调仓一次
+BASE_PER_PERCENT = 2000  # 每涨 1% 分配 $2,000
+INTERVAL = 3600  # 60 分钟调仓一次
 
 logger.add("champion_bot.log", rotation="10 MB", level="INFO", enqueue=True)
 
@@ -246,7 +246,7 @@ class DynamicMomentumBot:
 
 
 
-                if abs(diff_usd) > 100:  # 最小交易额
+                if abs(diff_usd) > 20:  # 最小交易额
                     amount = diff_usd / prices[sym]
                     side = "buy" if amount > 0 else "sell"
                     self.client.place_order(sym, side, amount)
