@@ -111,15 +111,22 @@ class ExchangeClient:
     def manual_buy_1usd_btc(self):
         """手动买入价值1 USD的比特币"""
         symbol = "BTC/USD"
-        usd_amount = 1.0
         try:
             price = self.fetch_price(symbol)
             if price <= 0:
                 raise ValueError("无效的价格")
+                
+            usd_amount = 1.0
             amount = usd_amount / price
+            # 最小单位
+            MIN_QTY = 0.0001
+            # 交易所不接受少于 0.0001 BTC
+            amount = max(amount, MIN_QTY)
+            # 精度限制为 4 位
+            amount = round(amount, 4)
             logger.info(f"计算得到买入数量: {amount:.8f} BTC (价值约 ${usd_amount})")
             self.place_order(symbol, "BUY", amount)
-            logger.info(f"手动买入 {amount:.8f} BTC 完成")
+            logger.info(f"手动买入 {amount:.4f} BTC 完成")
         except Exception as e:
             logger.error(f"手动买入失败: {e}")
 
