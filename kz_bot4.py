@@ -140,8 +140,8 @@ class ExchangeClient:
         info = RoostooClient.get_ex_info()
         trade_rules = {}
 
-        for sym_info in info["Symbols"]:
-            symbol = sym_info["Symbol"]
+        for sym_info in info["TradePairs"]:
+            symbol = sym_info["TradePairs"]
             qty_precision = 0
             price_precision = 0
             step_size = 0.0
