@@ -256,5 +256,5 @@ if __name__ == "__main__":
     INITIAL_CASH = initial_wallet.get("USD", 0)
     time.sleep(1)
     bot = DynamicMomentumBot(client, INITIAL_CASH)
-    client.manual_buy_1usd_btc()
+    #client.manual_buy_1usd_btc()
     bot.run()
