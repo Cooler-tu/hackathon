@@ -18,7 +18,6 @@ from roostoo_client import RoostooClient
 from horus_client3 import HorusClient
 
 # ==================== 配置 ====================
-INITIAL_CASH = 500_000
 DRY_RUN = False
 SYMBOLS = [
     "BTC/USD", "ETH/USD", "XRP/USD", "BNB/USD", "SOL/USD", "DOGE/USD",
@@ -39,11 +38,11 @@ logger.add("champion_bot.log", rotation="10 MB", level="INFO", enqueue=True)
 
 # ==================== 风控铁律 ====================
 class RiskManager:
-    def __init__(self):
+    def __init__(self, initial_cash):
         self.max_drawdown = 0.10
         self.max_per_asset = 0.35
         self.daily_loss_limit = 0.04
-        self.peak = INITIAL_CASH
+        self.peak = initial_cash
         self.today_pnl = 0.0
 
     def check(self, total_value: float, positions: Dict) -> bool:
@@ -126,9 +125,9 @@ class ExchangeClient:
 
 # ==================== 核心策略 ====================
 class DynamicMomentumBot:
-    def __init__(self, client):
+    def __init__(self, client, INITIAL_CASH):
         self.client = client
-        self.risk = RiskManager()
+        self.risk = RiskManager(INITIAL_CASH)
 
     def step(self):
         try:
@@ -236,7 +235,7 @@ class DynamicMomentumBot:
                     self.client.place_order(sym, side, amount)
                     logger.info(f"→ {side.upper()} {abs(amount):.6f} {sym} (${abs(diff_usd):,.0f})")
 
-                new_balance= self.client.get_balance(self)
+                new_balance= self.client.get_balance()
                 logger.info(f"购买后现金余额为{new_balance}")
 
         except Exception as e:
@@ -250,6 +249,9 @@ class DynamicMomentumBot:
 # ==================== 主程序 ====================
 if __name__ == "__main__":
     client = ExchangeClient()
-    bot = DynamicMomentumBot(client)
+    initial_wallet = client.get_balance()
+    INITIAL_CASH = initial_wallet.get("USD", 0)
+    time.sleep(1)
+    bot = DynamicMomentumBot(client, INITIAL_CASH)
     client.manual_buy_1usd_btc()
     bot.run()
