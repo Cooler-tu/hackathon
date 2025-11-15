@@ -22,7 +22,7 @@ import math
 DRY_RUN = False
 SYMBOLS = [
     "BTC/USD", "ETH/USD", "XRP/USD", "BNB/USD", "SOL/USD", "DOGE/USD",
-    "TRX/USD", "ADA/USD", "XLM/USD", "WBTC/USD", "SUI/USD", "HBAR/USD",
+    "TRX/USD", "ADA/USD", "XLM/USD", "SUI/USD", "HBAR/USD",
     "LINK/USD",  "UNI/USD", "AVAX/USD", "SHIB/USD",
     "TON/USD", "LTC/USD", "DOT/USD", "PEPE/USD", "AAVE/USD", "ONDO/USD",
     "TAO/USD", "WLD/USD", "APT/USD", "NEAR/USD", "ARB/USD", "ICP/USD",
