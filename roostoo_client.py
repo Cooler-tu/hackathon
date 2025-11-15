@@ -197,5 +197,11 @@ class RoostooClient:
             payload["type"] = "LIMIT"
             payload["price"] = price  # 不转 float
 
+        logger.info(f"[Roostoo] place_order payload = {payload}")
+
+        resp = self._sign_and_request("POST", "/v3/place_order", data=payload)
+
+        logger.info(f"[Roostoo] place_order response = {resp}")
+
         # 调用与官方一致的签名+POST
         return self._sign_and_request("POST", "/v3/place_order", data=payload)
