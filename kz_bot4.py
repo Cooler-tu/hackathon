@@ -140,20 +140,17 @@ class ExchangeClient:
         info = RoostooClient.get_ex_info()
         trade_rules = {}
 
-        for sym_info in info["TradePairs"]:
-            symbol = sym_info["TradePairs"]
-            qty_precision = 0
-            price_precision = 0
-            step_size = 0.0
-            tick_size = 0.0
+        # Roostoo 返回的是："TradePairs": { "BTC/USD": {...}, ... }
+        # 所以这里要写 .items()
+        for symbol, conf in info["TradePairs"].items():
 
-            for f in sym_info["Filters"]:
-                if f["FilterType"] == "LOT_SIZE":
-                    step_size = float(f["StepSize"])
-                    qty_precision = abs(int(round(math.log10(1 / step_size))))
-                if f["FilterType"] == "PRICE_FILTER":
-                    tick_size = float(f["TickSize"])
-                    price_precision = abs(int(round(math.log10(1 / tick_size))))
+            # Roostoo 结构里没有 Filters，所以直接从 conf 取字段
+            qty_precision = conf.get("AmountPrecision", 0)
+            price_precision = conf.get("PricePrecision", 0)
+
+            # 你原本的 step_size 逻辑是基于 LOT_SIZE，现在没有 LOT_SIZE，我们用精度换算
+            step_size = float(10 ** (-qty_precision))
+            tick_size = float(10 ** (-price_precision))
 
             trade_rules[symbol] = {
                 "step_size": step_size,
