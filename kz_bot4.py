@@ -35,7 +35,7 @@ SYMBOLS = [
 ]
 
 BASE_PER_PERCENT = 2000  # 每涨 1% 分配 $2,000
-INTERVAL = 30  # 60 分钟调仓一次
+INTERVAL = 3600  # 60 分钟调仓一次
 
 logger.add("champion_bot.log", rotation="10 MB", level="INFO", enqueue=True)
 
