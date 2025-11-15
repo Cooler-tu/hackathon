@@ -30,11 +30,16 @@ class RoostooClient:
         
 
     # ✅ 正确签名函数
-    def sign(self, params: dict = None):
-        params = params or {}
-        query = "&".join(f"{k}={v}" for k, v in sorted(params.items()))
-        return hmac.new(self.api_secret.encode(), query.encode(), hashlib.sha256).hexdigest()
+    def sign(self, params: dict):
+        query_string = "&".join(f"{k}={params[k]}" for k in sorted(params.keys()))
+        return hmac.new(
+            self.api_secret.encode("utf-8"),
+            query_string.encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()
 
+
+    '''
     # ✅ 核心请求函数
     def _sign_and_request(self, method, endpoint, params=None, data=None):
         params = params or {}
@@ -60,7 +65,7 @@ class RoostooClient:
             logger.error(f"API 请求失败: {endpoint} | {response.text if 'response' in locals() else str(e)}")
             raise
 
-    '''
+    
     def generate_signature(params):
         query_string = '&'.join(["{}={}".format(k, params[k])
                                 for k in sorted(params.keys())])
@@ -78,7 +83,7 @@ class RoostooClient:
 
     def get_balance(self):
         return self._sign_and_request("GET", "/v3/balance")
-
+    '''
     def place_order(self, pair, side, quantity, price=None):
         payload = {
             "timestamp": int(time.time()) * 1000,
@@ -90,8 +95,8 @@ class RoostooClient:
         if price is not None:
             payload["price"] = float(price)
         return self._sign_and_request("POST", "/v3/place_order", data=payload)
+
     
-    '''
     def place_order(coin, side, qty, price=None):
         payload = {
             "timestamp": int(time.time()) * 1000,
@@ -133,3 +138,49 @@ class RoostooClient:
 
     def pending_count(self):
         return self._sign_and_request("GET", "/v3/pending_count")
+    
+
+
+
+    def _sign_and_request(self, method, endpoint, data=None):
+        data = data or {}
+
+        # 官方：timestamp = int(time.time()) * 1000
+        data["timestamp"] = int(time.time()) * 1000
+
+        signature = self.sign(data)
+
+        headers = {
+            "RST-API-KEY": self.api_key,
+            "MSG-SIGNATURE": signature,
+        }
+
+        url = BASE_URL + endpoint
+
+        if method == "GET":
+            r = self.session.get(url, params=data, headers=headers)
+        else:
+            # 官方 DEMO 使用 POST form-data (data=payload)
+            r = self.session.post(url, data=data, headers=headers)
+
+        # 官方 DEMO 只打印，不 raise 异常
+        print(r.status_code, r.text)
+        return r
+
+    # === ✔ 完全与官方 DEMO 行为相同的 place_order ===
+    def place_order(self, pair, side, quantity, price=None):
+        payload = {
+            "pair": pair,             # 与官方一致：pair= "BTC/USD"
+            "side": side,             # 不转大写，保持用户输入
+            "quantity": quantity,     # 不转 float，保持原样
+        }
+
+        # 官方 DEMO：MARKET / LIMIT 判断方式
+        if price is None:
+            payload["type"] = "MARKET"
+        else:
+            payload["type"] = "LIMIT"
+            payload["price"] = price  # 不转 float
+
+        # 调用与官方一致的签名+POST
+        return self._sign_and_request("POST", "/v3/place_order", data=payload)
