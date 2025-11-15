@@ -83,6 +83,15 @@ class RoostooClient:
 
     def get_balance(self):
         return self._sign_and_request("GET", "/v3/balance")
+    
+    def get_ex_info():
+        r = requests.get(
+            BASE_URL + "/v3/exchangeInfo",
+        )
+        print (r.status_code, r.text)
+        return r.json()
+
+
     '''
     def place_order(self, pair, side, quantity, price=None):
         payload = {

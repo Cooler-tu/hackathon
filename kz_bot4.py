@@ -249,6 +249,8 @@ class DynamicMomentumBot:
             self.step()
             time.sleep(INTERVAL)
 
+
+
 # ==================== 主程序 ====================
 if __name__ == "__main__":
     client = ExchangeClient()
@@ -257,4 +259,5 @@ if __name__ == "__main__":
     time.sleep(1)
     bot = DynamicMomentumBot(client, INITIAL_CASH)
     #client.manual_buy_1usd_btc()
+    RoostooClient.get_ex_info()
     bot.run()
