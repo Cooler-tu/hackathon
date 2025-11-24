@@ -277,7 +277,7 @@ class DynamicMomentumBot:
                 amount = round(amount, rule["qty_precision"])
 
 
-                if abs(diff_usd) > 20 and abs(amount) > 0.:  # 最小交易额
+                if abs(diff_usd) > 10 and abs(amount) > 0.:  # 最小交易额
                     side = "BUY" if amount > 0 else "SELL"
                     self.client.place_order(sym, side, abs(amount))
                     logger.info(f"→ {side.upper()} {abs(amount):.6f} {sym} (${abs(diff_usd):,.0f})")
