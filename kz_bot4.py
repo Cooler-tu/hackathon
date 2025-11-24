@@ -35,7 +35,7 @@ SYMBOLS = [
 ]
 
 BASE_PER_PERCENT = 2000  # 每涨 1% 分配 $2,000
-INTERVAL = 900  # 15 分钟调仓一次
+INTERVAL = 3600  # 15 分钟调仓一次
 
 logger.add("champion_bot.log", rotation="10 MB", level="INFO", enqueue=True)
 
@@ -210,7 +210,7 @@ class DynamicMomentumBot:
                         asset=asset, 
                         # interval="15m",  # 使用15分钟间隔
                         # 计算合适的时间范围来获取最近2个数据点
-                        interval="15m",
+                        interval="1h",
                         limit = 2
                     )
                     
@@ -277,7 +277,7 @@ class DynamicMomentumBot:
                 amount = round(amount, rule["qty_precision"])
 
 
-                if abs(diff_usd) > 10 and abs(amount) > 0.:  # 最小交易额
+                if abs(diff_usd) > 50 and abs(amount) > 0.:  # 最小交易额
                     side = "BUY" if amount > 0 else "SELL"
                     self.client.place_order(sym, side, abs(amount))
                     logger.info(f"→ {side.upper()} {abs(amount):.6f} {sym} (${abs(diff_usd):,.0f})")
