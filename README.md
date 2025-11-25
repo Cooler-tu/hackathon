@@ -1,7 +1,7 @@
-<h1 style="font-size: 28px; align: center;">
+<h1 align="center" style="font-size: 28px; text-align: center;">
 Trading Bot for Hackathon
 </h1>
-<p style="font-size: 20px; align: center;">
+<p align="center" style="font-size: 22px; text-align: center;">
 Group 48 Chenyu ZHANG
 </p>
 
