@@ -2,7 +2,7 @@
 Trading Bot for Hackathon
 </h1>
 <p align="center" style="font-size: 25px; text-align: center;">
-Group 48 Chenyu ZHANG
+Group 48 Chenyu Zhang
 </p>
 
 * An automated cryptocurrency trading bot designed for a hackathon competition
@@ -162,3 +162,51 @@ if self.today_pnl < -self.daily_loss_limit * self.initial_cash:
     logger.warning("Risk control triggered: Daily loss exceeds 4%")
     return False
 ```
+<br>
+<br>
+
+## Team Gains
+
+### Financial Knowledge 
+* **Market Dynamics**: Gained deep understanding of cryptocurrency market mechanics and price movements
+* **Risk Management**: Learned to implement comprehensive risk controls including drawdown limits and position sizing
+* **Portfolio Theory**: Applied modern portfolio concepts to cryptocurrency trading and diversification
+* **Algorithmic Trading**: Understood how quantitative strategies work in real-world financial markets
+
+### Technical Skills 
+* **API Integration**: Mastered interfacing with financial APIs for real-time data and trade execution
+* **Algorithm Development**: Built and optimized trading algorithms using Python
+* **Error Handling**: Implemented robust exception handling and logging systems
+* **Precision Programming**: Learned to handle financial calculations with exact precision requirements
+
+### Team Collaboration 
+* **Project Planning**: Developed skills in breaking down complex projects into manageable tasks
+* **Version Control**: Effectively used Git for collaborative coding and code management
+* **Problem Solving**: Enhanced ability to troubleshoot and solve technical challenges as a team
+* **Communication Skills**: Improved technical communication and documentation practices
+
+**Overall Impact**: This hackathon transformed theoretical knowledge into practical experience, bridging the gap between academic learning and real-world financial technology applications.
+
+<br>
+<br>
+
+## Team Members
+
+**Team Lead**  
+Chenyu Zhang, Kevin - Strategy development & risk management
+
+**Technical Lead**  
+Siyao Huang, Rebecca - API integration & algorithm implementation
+
+**Quantitative Analyst**  
+Chenyu Zhang, Kevin - Data analysis & performance metrics
+
+**Risk Manager**  
+Siyao Huang, Rebecca - Risk controls & position management
+
+**Collaborators**  
+Zirui Wang, Jennifer - Documentation & testing
+
+---
+
+*Team 48 - Crypto Trading Bot Development* 
