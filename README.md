@@ -1,12 +1,15 @@
 <h1 style="font-size: 28px; text-align: center;">
-KZ Trading Bot for Hackathon
+Trading Bot for Hackathon
 </h1>
-<p style="font-size: 18px; text-align: center;">
+<h2 style="font-size: 22px; text-align: center;">
 Group 48 Chenyu ZHANG
-</p>
+</h2>
 
 * An automated cryptocurrency trading bot designed for a hackathon competition
 * Interacts with the Horus API to perform real-time trading operations, manage balances, and execute a parameter-driven trading strategy
+
+<br>
+<br>
 
 ## Strategy Overview
 
@@ -18,8 +21,8 @@ Group 48 Chenyu ZHANG
 * Rebalances every hour based on real-time market data
 * Enforces strict risk controls to protect capital
 
-
-
+<br>
+<br>
 
 ## Dynamic Momentum Rebalancing Explained
 
@@ -43,8 +46,8 @@ current_usd = positions[sym] # get data from API
 diff_usd = target_usd current_usd
 ```
 
-
-
+<br>
+<br>
 
 ## Minimum Order Rules & Trade Management
 
@@ -65,8 +68,8 @@ amount = math.floor(amount / step) * step # Round down to step multiple
 amount = round(amount, rule["qty_precision"]) # Round to required precision
 ```
 
-
-
+<br>
+<br>
 
 ## Risk Management
 Whenever trigger risk control, stop trade
